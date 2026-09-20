@@ -162,6 +162,7 @@ async function main() {
             stateSelect.value = compareState;
             renderMapSelection();
             renderLineChart();
+            renderFullTable();
           }),
       (update) => update,
     ).attr("fill", (d) => {
@@ -175,6 +176,11 @@ async function main() {
 
   function renderMapSelection() {
     mapSvg.selectAll("path.state-path").classed("selected", (d) => d.properties.name === compareState);
+    if (compareState) {
+      mapSvg.selectAll("path.state-path")
+        .filter((d) => d.properties.name === compareState)
+        .raise(); // bring the red outline above neighboring states' fills
+    }
   }
 
   // ======================================================================
@@ -346,12 +352,12 @@ async function main() {
       tbody.appendChild(tr);
     }
 
-    document.querySelectorAll("thead th").forEach((th) => {
+    document.querySelectorAll("#rankingTable thead th").forEach((th) => {
       th.classList.toggle("active", th.dataset.sort === sortKey);
     });
   }
 
-  document.querySelectorAll("thead th[data-sort]").forEach((th) => {
+  document.querySelectorAll("#rankingTable thead th[data-sort]").forEach((th) => {
     th.addEventListener("click", () => {
       const key = th.dataset.sort;
       if (key === "rank") return; // rank always mirrors value desc
@@ -367,6 +373,69 @@ async function main() {
   });
 
   // ======================================================================
+  // Full historical table (states x years, like the "All" sheet)
+  // ======================================================================
+  function renderFullTable() {
+    const head = document.getElementById("fullTableHead");
+    head.replaceChildren();
+    const thState = document.createElement("th");
+    thState.textContent = "Estado";
+    head.appendChild(thState);
+    for (const yr of years) {
+      const th = document.createElement("th");
+      th.textContent = String(yr);
+      th.classList.toggle("year-active", yr === selectedYear);
+      head.appendChild(th);
+    }
+
+    const body = document.getElementById("fullTableBody");
+    body.replaceChildren();
+
+    const statesSorted = dataset.states.slice().sort((a, b) => a.state.localeCompare(b.state, "pt-BR"));
+    for (const s of statesSorted) {
+      const tr = document.createElement("tr");
+      tr.classList.toggle("state-active", s.state === compareState);
+
+      const tdName = document.createElement("td");
+      tdName.textContent = s.state;
+      tdName.className = "state-name";
+      tdName.title = "Clique para destacar no mapa e no gráfico";
+      tdName.addEventListener("click", () => {
+        compareState = compareState === s.state ? "" : s.state;
+        stateSelect.value = compareState;
+        renderMapSelection();
+        renderLineChart();
+        renderFullTable();
+      });
+      tr.appendChild(tdName);
+
+      for (const yr of years) {
+        const td = document.createElement("td");
+        const v = valueFor(s.state, yr);
+        td.textContent = v === null ? "—" : fmt(v);
+        if (v === null) td.classList.add("no-data");
+        if (yr === selectedYear) td.classList.add("year-active");
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
+    }
+
+    const trTotal = document.createElement("tr");
+    trTotal.className = "total-row";
+    const tdLabel = document.createElement("td");
+    tdLabel.textContent = "Total EUA";
+    trTotal.appendChild(tdLabel);
+    for (const yr of years) {
+      const td = document.createElement("td");
+      const v = dataset.usTotal[String(yr)];
+      td.textContent = typeof v === "number" ? fmt(v) : "—";
+      if (yr === selectedYear) td.classList.add("year-active");
+      trTotal.appendChild(td);
+    }
+    body.appendChild(trTotal);
+  }
+
+  // ======================================================================
   // Wiring + initial render
   // ======================================================================
   function renderAll() {
@@ -375,6 +444,7 @@ async function main() {
     renderMap();
     renderLineChart();
     renderTable();
+    renderFullTable();
   }
 
   yearSelect.addEventListener("change", () => {
@@ -383,12 +453,14 @@ async function main() {
     renderStats();
     renderMap();
     renderTable();
+    renderFullTable();
   });
 
   stateSelect.addEventListener("change", () => {
     compareState = stateSelect.value;
     renderMapSelection();
     renderLineChart();
+    renderFullTable();
   });
 
   renderAll();

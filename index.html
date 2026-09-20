@@ -155,9 +155,32 @@
   tbody tr:hover { background: color-mix(in srgb, var(--text-primary) 4%, transparent); }
   .table-scroll { max-height: 420px; overflow-y: auto; overflow-x: auto; border-radius: 6px; }
 
+  .full-table-scroll { max-height: 480px; overflow: auto; border-radius: 6px; border: 1px solid var(--border); }
+  .full-table { border-collapse: separate; border-spacing: 0; font-size: 12px; white-space: nowrap; }
+  .full-table th, .full-table td {
+    padding: 5px 10px; border-bottom: 1px solid var(--gridline);
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .full-table thead th {
+    position: sticky; top: 0; background: var(--surface-1); color: var(--text-secondary);
+    font-size: 11px; font-weight: 600; border-bottom: 1px solid var(--baseline); z-index: 1;
+  }
+  .full-table th:first-child, .full-table td:first-child {
+    text-align: left; position: sticky; left: 0; background: var(--surface-1); z-index: 2;
+  }
+  .full-table thead th:first-child { z-index: 3; }
+  .full-table td.state-name { cursor: pointer; color: var(--text-primary); }
+  .full-table td.state-name:hover { text-decoration: underline; }
+  .full-table td.no-data { color: var(--text-muted); }
+  .full-table th.year-active, .full-table td.year-active { background: color-mix(in srgb, var(--series-1) 14%, var(--surface-1)); }
+  .full-table tr.state-active td { background: color-mix(in srgb, var(--series-2) 12%, var(--surface-1)); }
+  .full-table tr.state-active td.year-active { background: color-mix(in srgb, var(--series-2) 22%, var(--surface-1)); }
+  .full-table tr.total-row td { font-weight: 700; border-top: 2px solid var(--baseline); border-bottom: none; }
+  .full-table tr:not(.total-row):hover td:not(.year-active) { background: color-mix(in srgb, var(--text-primary) 4%, transparent); }
+
   .state-path { stroke: var(--surface-1); stroke-width: 1px; cursor: pointer; }
   .state-path:hover { stroke: var(--text-primary); stroke-width: 1.5px; }
-  .state-path.selected { stroke: var(--text-primary); stroke-width: 2px; }
+  .state-path.selected { stroke: var(--danger); stroke-width: 3px; }
 
   .axis path, .axis line { stroke: var(--baseline); }
   .axis text { fill: var(--text-muted); font-size: 10px; }
@@ -227,7 +250,7 @@
       <h2>Ranking — <span class="yearInline"></span></h2>
       <p class="sub">Clique no cabeçalho para ordenar.</p>
       <div class="table-scroll">
-        <table>
+        <table id="rankingTable">
           <thead>
             <tr>
               <th data-sort="rank">#</th>
@@ -238,6 +261,17 @@
           <tbody id="tableBody"></tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Histórico completo por estado</h2>
+    <p class="sub">Todos os anos lado a lado, como na aba "All" da planilha original. Clique no nome do estado para destacá-lo no mapa e no gráfico abaixo.</p>
+    <div class="full-table-scroll">
+      <table class="full-table" id="fullTable">
+        <thead><tr id="fullTableHead"></tr></thead>
+        <tbody id="fullTableBody"></tbody>
+      </table>
     </div>
   </div>
 
