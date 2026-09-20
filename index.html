@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Brasileiros nos EUA por Estado</title>
+<meta name="description" content="População nascida no Brasil residente nos EUA, por estado, 1990–presente. Fonte: US Census Bureau (ACS)." />
+<style>
+  :root {
+    color-scheme: light;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    --page: #f9f9f7;
+    --surface-1: #fcfcfb;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --gridline: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --series-1: #2a78d6;   /* categorical slot 1 - blue: US total */
+    --series-2: #eb6834;   /* categorical slot 2 - orange: compared state */
+    --seq-100: #cde2fb; --seq-150: #b7d3f6; --seq-200: #9ec5f4; --seq-250: #86b6ef;
+    --seq-300: #6da7ec; --seq-350: #5598e7; --seq-400: #3987e5; --seq-450: #2a78d6;
+    --seq-500: #256abf; --seq-550: #1c5cab; --seq-600: #184f95; --seq-650: #104281;
+    --seq-700: #0d366b;
+    --nodata: #e8e7e2;
+    --success: #006300;
+    --danger: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d;
+      --surface-1: #1a1a19;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #898781;
+      --gridline: #2c2c2a;
+      --baseline: #383835;
+      --border: rgba(255, 255, 255, 0.10);
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --nodata: #262624;
+      --success: #0ca30c;
+      --danger: #e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface-1: #1a1a19;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --gridline: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --nodata: #262624;
+    --success: #0ca30c;
+    --danger: #e66767;
+  }
+
+  * { box-sizing: border-box; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--text-primary);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding-inline: 20px;
+    padding-block: 24px 48px;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  header.page-head { margin-bottom: 20px; }
+  header.page-head h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  header.page-head p { margin: 0; color: var(--text-secondary); max-width: 62ch; }
+
+  .theme-toggle {
+    position: absolute; top: 20px; right: 20px;
+    border: 1px solid var(--border); background: var(--surface-1); color: var(--text-secondary);
+    border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer;
+  }
+
+  .filters {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 20px; padding: 12px 14px;
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
+  }
+  .filters label { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+  .filters select, .filters input[type="search"] {
+    font: inherit; font-size: 13px; color: var(--text-primary);
+    background: var(--page); border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 8px;
+  }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stat-tile {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+  }
+  .stat-tile .label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  .stat-tile .value { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
+  .stat-tile .delta { font-size: 12px; margin-top: 4px; }
+  .delta.up { color: var(--success); }
+  .delta.down { color: var(--danger); }
+  .delta.flat { color: var(--text-muted); }
+
+  .cards { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 860px) { .cards { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; position: relative; overflow: hidden;
+  }
+  .card h2 { font-size: 14px; margin: 0 0 2px; }
+  .card .sub { font-size: 12px; color: var(--text-muted); margin: 0 0 10px; }
+
+  .legend-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-secondary); margin-top: 8px; }
+  .legend-bar { flex: 1; height: 10px; border-radius: 5px; background: linear-gradient(to right, var(--seq-100), var(--seq-700)); }
+
+  .line-legend { display: flex; gap: 16px; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  .line-legend .key { display: inline-flex; align-items: center; gap: 6px; }
+  .line-legend .swatch { width: 14px; height: 2px; border-radius: 1px; display: inline-block; }
+
+  .tooltip {
+    position: fixed; pointer-events: none; z-index: 20;
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; font-size: 12px; color: var(--text-secondary);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    max-width: 220px;
+  }
+  .tooltip .t-title { color: var(--text-primary); font-weight: 600; margin-bottom: 4px; }
+  .tooltip .t-row { display: flex; justify-content: space-between; gap: 10px; }
+  .tooltip .t-row .v { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tooltip .t-row .k { display: flex; align-items: center; gap: 6px; }
+  .tooltip .k .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.03em;
+    padding: 6px 8px; border-bottom: 1px solid var(--gridline); cursor: pointer; user-select: none;
+    position: sticky; top: 0; background: var(--surface-1);
+  }
+  thead th.active { color: var(--text-primary); }
+  tbody td { padding: 6px 8px; border-bottom: 1px solid var(--gridline); }
+  tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr:hover { background: color-mix(in srgb, var(--text-primary) 4%, transparent); }
+  .table-scroll { max-height: 420px; overflow-y: auto; overflow-x: auto; border-radius: 6px; }
+
+  .state-path { stroke: var(--surface-1); stroke-width: 1px; cursor: pointer; }
+  .state-path:hover { stroke: var(--text-primary); stroke-width: 1.5px; }
+  .state-path.selected { stroke: var(--text-primary); stroke-width: 2px; }
+
+  .axis path, .axis line { stroke: var(--baseline); }
+  .axis text { fill: var(--text-muted); font-size: 10px; }
+  .gridline { stroke: var(--gridline); stroke-width: 1px; }
+
+  footer { margin-top: 24px; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--gridline); padding-top: 12px; }
+  footer a { color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<div class="wrap" style="position:relative">
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema">🌓 Tema</button>
+
+  <header class="page-head">
+    <h1>Brasileiros residentes nos EUA, por estado</h1>
+    <p>População nascida no Brasil por estado americano, <span id="yearRangeLabel"></span>. Fonte: US Census Bureau, American Community Survey (ACS), Tabela C05006.</p>
+  </header>
+
+  <div class="filters">
+    <label>Ano
+      <select id="yearSelect"></select>
+    </label>
+    <label>Comparar estado no gráfico
+      <select id="stateSelect"><option value="">Nenhum</option></select>
+    </label>
+    <label style="margin-left:auto">Buscar na tabela
+      <input type="search" id="tableSearch" placeholder="Nome do estado" />
+    </label>
+  </div>
+
+  <div class="stats">
+    <div class="stat-tile">
+      <div class="label">Total nos EUA (<span class="yearInline"></span>)</div>
+      <div class="value" id="statTotal">–</div>
+      <div class="delta" id="statDelta"></div>
+    </div>
+    <div class="stat-tile">
+      <div class="label">Estado com mais brasileiros</div>
+      <div class="value" id="statTop" style="font-size:20px">–</div>
+      <div class="delta flat" id="statTopValue"></div>
+    </div>
+    <div class="stat-tile">
+      <div class="label">Estados com dado no ano</div>
+      <div class="value" id="statCoverage">–</div>
+      <div class="delta flat">de 51 (50 estados + DC)</div>
+    </div>
+    <div class="stat-tile">
+      <div class="label">Última atualização do dataset</div>
+      <div class="value" id="statUpdated" style="font-size:18px">–</div>
+      <div class="delta flat">gerado por scripts/update-data.mjs</div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <h2>Mapa por estado</h2>
+      <p class="sub">Cor = população nascida no Brasil no ano selecionado. Passe o mouse para ver o valor.</p>
+      <svg id="map" viewBox="0 0 960 600" style="width:100%;height:auto;display:block"></svg>
+      <div class="legend-row">
+        <span>0</span>
+        <span class="legend-bar"></span>
+        <span id="legendMax">–</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Ranking — <span class="yearInline"></span></h2>
+      <p class="sub">Clique no cabeçalho para ordenar.</p>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th data-sort="rank">#</th>
+              <th data-sort="state">Estado</th>
+              <th data-sort="value" class="active">População</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Evolução histórica</h2>
+    <p class="sub">Total nos EUA desde 1990. O Census Bureau não publicou estimativa ACS de 1 ano para 2020 (pandemia) — o intervalo aparece como uma quebra na linha.</p>
+    <div class="line-legend" id="lineLegend">
+      <span class="key"><span class="swatch" style="background:var(--series-1)"></span>Total EUA</span>
+    </div>
+    <svg id="lineChart" viewBox="0 0 960 340" style="width:100%;height:auto;display:block"></svg>
+  </div>
+
+  <footer>
+    <p id="sourceNote">Fonte dos dados: US Census Bureau.</p>
+    <p>1990/2000: Census decenal. 2001–2004: PUMS. 2005 em diante: ACS 1-ano (sujeito a margem de erro, não exibida aqui — ver data.census.gov para os intervalos de confiança). Dataset e metodologia herdados do processo manual documentado em <code>legacy/Instruction_2026.docx</code>; atualização automatizada em <code>scripts/update-data.mjs</code>.</p>
+  </footer>
+</div>
+
+<div class="tooltip" id="tooltip" hidden></div>
+
+<script type="module" src="assets/app.js"></script>
+</body>
+</html>

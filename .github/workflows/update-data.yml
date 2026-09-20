@@ -1,0 +1,42 @@
+name: Update Brazilian population data
+
+on:
+  # US Census Bureau typically publishes new ACS 1-year estimates in mid-September.
+  # Run weekly from late August through October to catch the release automatically;
+  # it's a no-op (nothing committed) on weeks the new year isn't out yet.
+  schedule:
+    - cron: "0 13 * * 1" # every Monday at 13:00 UTC
+  workflow_dispatch:
+    inputs:
+      year:
+        description: "Specific ACS year to fetch (leave empty to try the next year after the latest on file)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Fetch latest ACS data
+        run: node scripts/update-data.mjs ${{ inputs.year }}
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- data/population.json; then
+            echo "No new data published yet."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/population.json
+          git commit -m "data: update Brazilian population dataset"
+          git push

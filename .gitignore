@@ -1,0 +1,7 @@
+.DS_Store
+~$*
+Thumbs.db
+
+# Original manual workbook/instructions from Alvaro Lima - kept locally for
+# reference, not published (macro-enabled + not ours to publish by default).
+/legacy/
