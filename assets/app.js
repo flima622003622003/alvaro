@@ -161,7 +161,7 @@ async function main() {
             compareState = compareState === name ? "" : name;
             stateSelect.value = compareState;
             renderMapSelection();
-            renderLineChart();
+            renderLineCharts();
             renderFullTable();
           }),
       (update) => update,
@@ -184,31 +184,39 @@ async function main() {
   }
 
   // ======================================================================
-  // Line chart: US total over time, optional state overlay
+  // Line charts: US total and selected state, each on its own chart/scale
   // ======================================================================
-  const lineSvg = d3.select("#lineChart");
   const M = { top: 16, right: 16, bottom: 28, left: 56 };
   const W = 960, H = 340;
 
-  function renderLineChart() {
+  function renderLineCharts() {
+    drawLineChart(d3.select("#lineChart"), {
+      label: "Total EUA", color: cssVar("--series-1"),
+      values: years.map((y) => ({ year: y, value: dataset.usTotal[String(y)] ?? null })),
+    });
+
+    const stateSvg = d3.select("#stateLineChart");
+    const empty = document.getElementById("stateChartEmpty");
+    document.getElementById("stateChartTitle").textContent = compareState
+      ? `Evolução histórica — ${compareState}`
+      : "Evolução histórica por estado";
+    if (!compareState) {
+      stateSvg.selectAll("*").remove();
+      stateSvg.style("display", "none");
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+    stateSvg.style("display", "block");
+    drawLineChart(stateSvg, {
+      label: compareState, color: cssVar("--series-2"),
+      values: years.map((y) => ({ year: y, value: valueFor(compareState, y) })),
+    });
+  }
+
+  function drawLineChart(lineSvg, s) {
     lineSvg.selectAll("*").remove();
-
-    const series = [{ key: "us", label: "Total EUA", color: cssVar("--series-1"), values: years.map((y) => ({ year: y, value: dataset.usTotal[String(y)] ?? null })) }];
-    if (compareState) {
-      series.push({ key: "state", label: compareState, color: cssVar("--series-2"), values: years.map((y) => ({ year: y, value: valueFor(compareState, y) })) });
-    }
-
-    const legend = document.getElementById("lineLegend");
-    legend.replaceChildren();
-    for (const s of series) {
-      const span = document.createElement("span");
-      span.className = "key";
-      const sw = document.createElement("span");
-      sw.className = "swatch";
-      sw.style.background = s.color;
-      span.append(sw, document.createTextNode(s.label));
-      legend.appendChild(span);
-    }
+    const series = [s];
 
     const x = d3.scaleLinear().domain(d3.extent(years)).range([M.left, W - M.right]);
     const maxY = d3.max(series.flatMap((s) => s.values.map((v) => v.value ?? 0))) ?? 1;
@@ -404,7 +412,7 @@ async function main() {
         compareState = compareState === s.state ? "" : s.state;
         stateSelect.value = compareState;
         renderMapSelection();
-        renderLineChart();
+        renderLineCharts();
         renderFullTable();
       });
       tr.appendChild(tdName);
@@ -442,7 +450,7 @@ async function main() {
     document.querySelectorAll(".yearInline").forEach((el) => (el.textContent = String(selectedYear)));
     renderStats();
     renderMap();
-    renderLineChart();
+    renderLineCharts();
     renderTable();
     renderFullTable();
   }
@@ -459,7 +467,7 @@ async function main() {
   stateSelect.addEventListener("change", () => {
     compareState = stateSelect.value;
     renderMapSelection();
-    renderLineChart();
+    renderLineCharts();
     renderFullTable();
   });
 

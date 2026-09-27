@@ -285,12 +285,16 @@
   </div>
 
   <div class="card">
-    <h2>Evolução histórica</h2>
+    <h2>Evolução histórica — Total EUA</h2>
     <p class="sub">Total nos EUA desde 1990. O Census Bureau não publicou estimativa ACS de 1 ano para 2020 (pandemia) — o intervalo aparece como uma quebra na linha.</p>
-    <div class="line-legend" id="lineLegend">
-      <span class="key"><span class="swatch" style="background:var(--series-1)"></span>Total EUA</span>
-    </div>
     <svg id="lineChart" viewBox="0 0 960 340" style="width:100%;height:auto;display:block"></svg>
+  </div>
+
+  <div class="card">
+    <h2 id="stateChartTitle">Evolução histórica por estado</h2>
+    <p class="sub">Série do estado selecionado desde 1990, em escala própria. Escolha um estado no filtro “Comparar estado no gráfico” ou clique no mapa.</p>
+    <p class="sub" id="stateChartEmpty">Nenhum estado selecionado.</p>
+    <svg id="stateLineChart" viewBox="0 0 960 340" style="width:100%;height:auto;display:none"></svg>
   </div>
 
   <footer>
