@@ -81,13 +81,13 @@
 
   header.page-head { margin-bottom: 20px; }
   header.page-head .logo { display: block; height: 64px; width: auto; margin: 0 0 12px; }
-  header.page-head .logo-dark { display: none; }
+  .logo-dark { display: none !important; }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) header.page-head .logo-light { display: none; }
-    :root:not([data-theme="light"]) header.page-head .logo-dark { display: block; }
+    :root:not([data-theme="light"]) .logo-light { display: none !important; }
+    :root:not([data-theme="light"]) .logo-dark { display: block !important; }
   }
-  :root[data-theme="dark"] header.page-head .logo-light { display: none; }
-  :root[data-theme="dark"] header.page-head .logo-dark { display: block; }
+  :root[data-theme="dark"] .logo-light { display: none !important; }
+  :root[data-theme="dark"] .logo-dark { display: block !important; }
   header.page-head h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
   header.page-head p { margin: 0; color: var(--text-secondary); max-width: 62ch; }
 
@@ -108,6 +108,9 @@
   /* page-colored strip above the stuck bar so content doesn't show through the 8px gap */
   .filters::before { content: ""; position: absolute; left: -1px; right: -1px; top: -9px; height: 9px; background: var(--page); }
   @media (max-width: 600px) { .filters { position: static; } }
+  /* small logo shown in the filter bar only while it is stuck */
+  .filters .bar-logo { height: 28px; width: auto; margin-right: 4px; }
+  .filters:not(.is-stuck) .bar-logo { display: none !important; }
   .filters label { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
   .filters select, .filters input[type="search"] {
     font: inherit; font-size: 13px; color: var(--text-primary);
@@ -217,6 +220,8 @@
   </header>
 
   <div class="filters">
+    <img class="bar-logo logo-light" src="logo.png" alt="Instituto Diáspora Brasil" width="75" height="28" />
+    <img class="bar-logo logo-dark" src="logo-dark.png" alt="Instituto Diáspora Brasil" width="75" height="28" />
     <label>Ano
       <select id="yearSelect"></select>
     </label>
