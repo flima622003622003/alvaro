@@ -101,7 +101,13 @@
     display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
     margin-bottom: 20px; padding: 12px 14px;
     background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
+    position: sticky; top: 8px; z-index: 10;
+    transition: box-shadow 150ms ease;
   }
+  .filters.is-stuck { box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.25); }
+  /* page-colored strip above the stuck bar so content doesn't show through the 8px gap */
+  .filters::before { content: ""; position: absolute; left: -1px; right: -1px; top: -9px; height: 9px; background: var(--page); }
+  @media (max-width: 600px) { .filters { position: static; } }
   .filters label { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
   .filters select, .filters input[type="search"] {
     font: inherit; font-size: 13px; color: var(--text-primary);
@@ -306,6 +312,16 @@
 
 <div class="tooltip" id="tooltip" hidden></div>
 
+<script>
+  // Shadow on the filter bar only while it is stuck to the top of the viewport.
+  (() => {
+    const bar = document.querySelector(".filters");
+    const update = () => bar.classList.toggle("is-stuck", getComputedStyle(bar).position === "sticky" && Math.round(bar.getBoundingClientRect().top) <= 8);
+    addEventListener("scroll", update, { passive: true });
+    addEventListener("resize", update);
+    update();
+  })();
+</script>
 <script type="module" src="assets/app.js"></script>
 </body>
 </html>
