@@ -30,6 +30,7 @@
     --bar-accent: #2F8F81;
     --bar-tint: 7%;
     --bar-shadow: rgba(0, 0, 0, 0.35);
+    --edge-shadow: rgba(0, 0, 0, 0.18);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -50,6 +51,7 @@
       --bar-accent: #45B3A1;
       --bar-tint: 12%;
       --bar-shadow: rgba(0, 0, 0, 0.8);
+      --edge-shadow: rgba(0, 0, 0, 0.7);
     }
   }
   :root[data-theme="dark"] {
@@ -70,6 +72,7 @@
     --bar-accent: #45B3A1;
     --bar-tint: 12%;
     --bar-shadow: rgba(0, 0, 0, 0.8);
+    --edge-shadow: rgba(0, 0, 0, 0.7);
   }
 
   * { box-sizing: border-box; }
@@ -194,7 +197,22 @@
   tbody tr:hover { background: color-mix(in srgb, var(--text-primary) 4%, transparent); }
   .table-scroll { max-height: 420px; overflow-y: auto; overflow-x: auto; border-radius: 6px; }
 
+  .full-table-wrap { position: relative; }
   .full-table-scroll { max-height: 480px; overflow: auto; border-radius: 6px; border: 1px solid var(--border); }
+  /* hint that more years are hidden: shadow after the sticky state column (left)
+     and a fade over the last visible columns (right) */
+  .full-table-wrap.more-left .full-table th:first-child,
+  .full-table-wrap.more-left .full-table td:first-child {
+    border-right: 1px solid var(--baseline);
+    box-shadow: 8px 0 10px -6px var(--edge-shadow);
+  }
+  .full-table-wrap::after {
+    content: ""; position: absolute; pointer-events: none;
+    top: 1px; bottom: calc(1px + var(--sb-x, 0px)); right: calc(1px + var(--sb-y, 0px)); width: 32px;
+    background: linear-gradient(to left, var(--surface-1), transparent);
+    opacity: 0; transition: opacity 150ms ease;
+  }
+  .full-table-wrap.more-right::after { opacity: 1; }
   .full-table { border-collapse: separate; border-spacing: 0; font-size: 12px; white-space: nowrap; }
   .full-table th, .full-table td {
     padding: 5px 10px; border-bottom: 1px solid var(--gridline);
@@ -305,11 +323,13 @@
   <div class="card">
     <h2>Histórico completo por estado</h2>
     <p class="sub">Todos os anos lado a lado, como na aba "All" da planilha original. Clique no nome do estado para destacá-lo no mapa e no gráfico abaixo.</p>
-    <div class="full-table-scroll">
-      <table class="full-table" id="fullTable">
-        <thead><tr id="fullTableHead"></tr></thead>
-        <tbody id="fullTableBody"></tbody>
-      </table>
+    <div class="full-table-wrap">
+      <div class="full-table-scroll">
+        <table class="full-table" id="fullTable">
+          <thead><tr id="fullTableHead"></tr></thead>
+          <tbody id="fullTableBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 

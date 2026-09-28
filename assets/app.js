@@ -476,8 +476,9 @@ async function main() {
     body.appendChild(trTotal);
   }
 
-  // Scroll only the table's own box (never the page) so the selected state's
-  // row and/or the selected year's column end up centered in view.
+  // Scroll only the table's own box (never the page): the selected year's
+  // column lands at the right edge (earlier years to its left) and the
+  // selected state's row is centered vertically.
   function scrollFullTable({ toState = true, toYear = false, behavior = "smooth" } = {}) {
     const box = document.querySelector(".full-table-scroll");
     const boxRect = box.getBoundingClientRect();
@@ -486,7 +487,8 @@ async function main() {
     const th = toYear && document.querySelector(`#fullTableHead th[data-year="${selectedYear}"]`);
     if (th) {
       const r = th.getBoundingClientRect();
-      target.left = box.scrollLeft + (r.left - boxRect.left) - (box.clientWidth - r.width) / 2;
+      // 40px spare so a column that isn't the last one clears the right-edge fade
+      target.left = box.scrollLeft + (r.right - boxRect.left) - box.clientWidth + 40;
     }
     if (toState && compareState) {
       const tr = [...document.querySelectorAll("#fullTableBody tr[data-state]")].find((row) => row.dataset.state === compareState);
@@ -496,7 +498,22 @@ async function main() {
       }
     }
     box.scrollTo(target);
+    updateFullTableEdges();
   }
+
+  // Toggle the left/right "more years" hints on the table wrapper, and keep
+  // the right fade clear of the scrollbars.
+  function updateFullTableEdges() {
+    const box = document.querySelector(".full-table-scroll");
+    const wrap = box.parentElement;
+    const maxLeft = box.scrollWidth - box.clientWidth;
+    wrap.classList.toggle("more-left", box.scrollLeft > 1);
+    wrap.classList.toggle("more-right", box.scrollLeft < maxLeft - 1);
+    wrap.style.setProperty("--sb-y", `${box.offsetWidth - box.clientWidth - 2}px`);
+    wrap.style.setProperty("--sb-x", `${box.offsetHeight - box.clientHeight - 2}px`);
+  }
+  document.querySelector(".full-table-scroll").addEventListener("scroll", updateFullTableEdges, { passive: true });
+  addEventListener("resize", updateFullTableEdges);
 
   // ======================================================================
   // Wiring + initial render
@@ -508,8 +525,7 @@ async function main() {
     renderLineCharts();
     renderTable();
     renderFullTable();
-    // Start at the first year; the table only follows the year once the user picks one.
-    scrollFullTable({ behavior: "auto" });
+    scrollFullTable({ toYear: true, behavior: "auto" });
   }
 
   yearSelect.addEventListener("change", () => {
