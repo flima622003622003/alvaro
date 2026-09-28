@@ -312,7 +312,10 @@ async function main() {
       .on("mousemove", (event) => {
         const [mx] = d3.pointer(event);
         const yearAtX = x.invert(mx);
-        const nearest = years.reduce((a, b) => (Math.abs(b - yearAtX) < Math.abs(a - yearAtX) ? b : a));
+        // snap to every calendar year on the axis, including ones absent from the
+        // data (1991-1999), so the tooltip says "sem dado" there like it does for 2020
+        const [minYear, maxYear] = d3.extent(years);
+        const nearest = Math.min(maxYear, Math.max(minYear, Math.round(yearAtX)));
         hoverLine.attr("x1", x(nearest)).attr("x2", x(nearest)).style("opacity", 1);
 
         const wrap = document.createElement("div");
