@@ -26,6 +26,10 @@
     --nodata: #e8e7e2;
     --success: #006300;
     --danger: #d03b3b;
+    /* sticky filter bar highlight */
+    --bar-accent: #2F8F81;
+    --bar-tint: 7%;
+    --bar-shadow: rgba(0, 0, 0, 0.35);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -43,6 +47,9 @@
       --nodata: #262624;
       --success: #0ca30c;
       --danger: #e66767;
+      --bar-accent: #45B3A1;
+      --bar-tint: 12%;
+      --bar-shadow: rgba(0, 0, 0, 0.8);
     }
   }
   :root[data-theme="dark"] {
@@ -60,6 +67,9 @@
     --nodata: #262624;
     --success: #0ca30c;
     --danger: #e66767;
+    --bar-accent: #45B3A1;
+    --bar-tint: 12%;
+    --bar-shadow: rgba(0, 0, 0, 0.8);
   }
 
   * { box-sizing: border-box; }
@@ -100,9 +110,16 @@
     margin-bottom: 20px; padding: 12px 14px;
     background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
     position: sticky; top: 8px; z-index: 10;
-    transition: box-shadow 150ms ease;
+    transition: box-shadow 150ms ease, background-color 150ms ease, border-color 150ms ease;
   }
-  .filters.is-stuck { box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.25); }
+  /* stuck: green accent strip on top, tinted (still opaque) background, stronger shadow */
+  .filters.is-stuck {
+    background: color-mix(in srgb, var(--bar-accent) var(--bar-tint), var(--surface-1));
+    border-color: color-mix(in srgb, var(--bar-accent) 45%, transparent);
+    box-shadow: inset 0 3px 0 var(--bar-accent), 0 10px 24px -8px var(--bar-shadow);
+  }
+  .filters.is-stuck label { color: var(--text-primary); font-weight: 500; }
+  .filters.is-stuck select { border-color: color-mix(in srgb, var(--bar-accent) 40%, transparent); }
   /* page-colored strip above the stuck bar so content doesn't show through the 8px gap */
   .filters::before { content: ""; position: absolute; left: -1px; right: -1px; top: -9px; height: 9px; background: var(--page); }
   @media (max-width: 600px) { .filters { position: static; } }
