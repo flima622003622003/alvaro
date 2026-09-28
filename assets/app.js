@@ -119,17 +119,32 @@ async function main() {
   const geoStates = feature(topo, topo.objects.states).features;
   const path = d3.geoPath(d3.geoAlbersUsa().scale(1200).translate([480, 300]));
 
-  function colorScale(maxValue) {
-    const domain = d3.scaleSqrt().domain([0, maxValue]).range([0, 1]);
-    const steps = seqSteps.map(cssVar);
-    const interp = d3.interpolateRgbBasis(steps);
-    return (v) => interp(domain(v));
+  // Fixed classes (same for every year) so colors are comparable across years.
+  const mapBreaks = [1000, 5000, 20000];
+  const mapClassLabels = ["Menos de 1.000", "1.000 a 4.999", "5.000 a 19.999", "20.000 ou mais"];
+
+  function colorScale() {
+    return d3.scaleThreshold().domain(mapBreaks).range(seqSteps.map(cssVar));
+  }
+
+  function renderMapLegend(hasNoData) {
+    const legend = document.getElementById("mapLegend");
+    legend.replaceChildren();
+    const keys = seqSteps.map((v, i) => [cssVar(v), mapClassLabels[i]]).reverse();
+    if (hasNoData) keys.push([cssVar("--nodata"), "Sem dado"]);
+    for (const [color, label] of keys) {
+      const span = document.createElement("span");
+      span.className = "key";
+      const sw = document.createElement("span");
+      sw.className = "swatch";
+      sw.style.background = color;
+      span.append(sw, document.createTextNode(label));
+      legend.appendChild(span);
+    }
   }
 
   function renderMap() {
-    const rows = rowsForYear(selectedYear);
-    const maxValue = d3.max(rows, (r) => r.value) ?? 1;
-    const color = colorScale(maxValue);
+    const color = colorScale();
     const nodata = cssVar("--nodata");
 
     const sel = mapSvg.selectAll("path.state-path").data(geoStates, (d) => d.id);
@@ -171,7 +186,7 @@ async function main() {
     });
 
     renderMapSelection();
-    document.getElementById("legendMax").textContent = fmt(maxValue);
+    renderMapLegend(dataset.states.some((s) => valueFor(s.state, selectedYear) === null));
   }
 
   function renderMapSelection() {

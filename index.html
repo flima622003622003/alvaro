@@ -140,8 +140,9 @@
   .card h2 { font-size: 14px; margin: 0 0 2px; }
   .card .sub { font-size: 12px; color: var(--text-muted); margin: 0 0 10px; }
 
-  .legend-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-secondary); margin-top: 8px; }
-  .legend-bar { flex: 1; height: 10px; border-radius: 5px; background: linear-gradient(to right, var(--seq-1), var(--seq-2), var(--seq-3), var(--seq-4)); }
+  .map-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--text-secondary); margin: 0 0 10px; }
+  .map-legend .key { display: inline-flex; align-items: center; gap: 6px; }
+  .map-legend .swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
 
   .line-legend { display: flex; gap: 16px; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
   .line-legend .key { display: inline-flex; align-items: center; gap: 6px; }
@@ -256,12 +257,8 @@
     <div class="card">
       <h2>Mapa por estado</h2>
       <p class="sub">Cor = população nascida no Brasil no ano selecionado. Passe o mouse para ver o valor.</p>
+      <div class="map-legend" id="mapLegend"></div>
       <svg id="map" viewBox="0 0 960 600" style="width:100%;height:auto;display:block"></svg>
-      <div class="legend-row">
-        <span>0</span>
-        <span class="legend-bar"></span>
-        <span id="legendMax">–</span>
-      </div>
     </div>
 
     <div class="card">
