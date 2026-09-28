@@ -344,18 +344,20 @@ async function main() {
   let searchTerm = "";
 
   function renderTable() {
-    const rows = rowsForYear(selectedYear)
-      .filter((r) => r.state.toLowerCase().includes(searchTerm))
-      .sort((a, b) => {
-        if (sortKey === "state") return sortDir * a.state.localeCompare(b.state, "pt-BR");
-        return sortDir * (a.value - b.value);
-      });
-
+    // "#" is always the position by population, whatever the current sort.
     const rankByValue = new Map(
       rowsForYear(selectedYear)
         .sort((a, b) => b.value - a.value)
         .map((r, i) => [r.state, i + 1]),
     );
+
+    const rows = rowsForYear(selectedYear)
+      .filter((r) => r.state.toLowerCase().includes(searchTerm))
+      .sort((a, b) => {
+        if (sortKey === "state") return sortDir * a.state.localeCompare(b.state, "pt-BR");
+        if (sortKey === "rank") return sortDir * (rankByValue.get(a.state) - rankByValue.get(b.state));
+        return sortDir * (a.value - b.value);
+      });
 
     const tbody = document.getElementById("tableBody");
     tbody.replaceChildren();
@@ -372,16 +374,33 @@ async function main() {
       tbody.appendChild(tr);
     }
 
-    document.querySelectorAll("#rankingTable thead th").forEach((th) => {
-      th.classList.toggle("active", th.dataset.sort === sortKey);
+    document.querySelectorAll("#rankingTable thead th[data-sort]").forEach((th) => {
+      const active = th.dataset.sort === sortKey;
+      th.classList.toggle("active", active);
+      th.setAttribute("aria-sort", active ? (sortDir === 1 ? "ascending" : "descending") : "none");
+      th.querySelector(".sort-ind").textContent = active ? (sortDir === 1 ? "▲" : "▼") : "↕";
     });
+    document.getElementById("rankingSortNote").textContent =
+      `Ordenado por ${sortNotes[sortKey][sortDir === 1 ? 0 : 1]}. Clique nos cabeçalhos para mudar.`;
   }
 
+  // First click on a column uses its natural direction; clicking again flips it.
+  const firstSortDir = { rank: 1, state: 1, value: -1 };
+  const sortNotes = {
+    rank: ["posição (1º → último)", "posição (último → 1º)"],
+    state: ["estado (A → Z)", "estado (Z → A)"],
+    value: ["população (menor → maior)", "população (maior → menor)"],
+  };
+
   document.querySelectorAll("#rankingTable thead th[data-sort]").forEach((th) => {
+    const ind = document.createElement("span");
+    ind.className = "sort-ind";
+    ind.setAttribute("aria-hidden", "true");
+    th.appendChild(ind);
+    th.title = "Clique para ordenar";
     th.addEventListener("click", () => {
       const key = th.dataset.sort;
-      if (key === "rank") return; // rank always mirrors value desc
-      sortDir = sortKey === key ? -sortDir : -1;
+      sortDir = sortKey === key ? -sortDir : firstSortDir[key];
       sortKey = key;
       renderTable();
     });
