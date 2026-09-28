@@ -21,10 +21,8 @@
     --border: rgba(11, 11, 11, 0.10);
     --series-1: #2a78d6;   /* categorical slot 1 - blue: US total */
     --series-2: #eb6834;   /* categorical slot 2 - orange: compared state */
-    --seq-100: #cde2fb; --seq-150: #b7d3f6; --seq-200: #9ec5f4; --seq-250: #86b6ef;
-    --seq-300: #6da7ec; --seq-350: #5598e7; --seq-400: #3987e5; --seq-450: #2a78d6;
-    --seq-500: #256abf; --seq-550: #1c5cab; --seq-600: #184f95; --seq-650: #104281;
-    --seq-700: #0d366b;
+    /* map scale, lightest (fewest) to darkest (most) */
+    --seq-1: #E3E8E2; --seq-2: #8EC3B9; --seq-3: #2F8F81; --seq-4: #0E5A4E;
     --nodata: #e8e7e2;
     --success: #006300;
     --danger: #d03b3b;
@@ -143,7 +141,7 @@
   .card .sub { font-size: 12px; color: var(--text-muted); margin: 0 0 10px; }
 
   .legend-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-secondary); margin-top: 8px; }
-  .legend-bar { flex: 1; height: 10px; border-radius: 5px; background: linear-gradient(to right, var(--seq-100), var(--seq-700)); }
+  .legend-bar { flex: 1; height: 10px; border-radius: 5px; background: linear-gradient(to right, var(--seq-1), var(--seq-2), var(--seq-3), var(--seq-4)); }
 
   .line-legend { display: flex; gap: 16px; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
   .line-legend .key { display: inline-flex; align-items: center; gap: 6px; }

@@ -2,7 +2,7 @@ import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 import { feature } from "https://cdn.jsdelivr.net/npm/topojson-client@3/+esm";
 
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("pt-BR") : "sem dado");
-const seqSteps = ["--seq-100", "--seq-150", "--seq-200", "--seq-250", "--seq-300", "--seq-350", "--seq-400", "--seq-450", "--seq-500", "--seq-550", "--seq-600", "--seq-650", "--seq-700"];
+const seqSteps = ["--seq-1", "--seq-2", "--seq-3", "--seq-4"];
 
 function cssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
