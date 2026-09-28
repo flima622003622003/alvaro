@@ -40,7 +40,10 @@ async function main() {
 
   document.getElementById("yearRangeLabel").textContent = `${years[0]}–${latestYear}`;
   document.querySelectorAll(".yearInline").forEach((el) => (el.textContent = String(selectedYear)));
-  document.getElementById("statUpdated").textContent = dataset.lastUpdated ?? "–";
+  // "2026-09-20" -> "20/09/2026"; split the string instead of new Date() so the
+  // browser's timezone can't shift it to the previous day
+  const [upY, upM, upD] = (dataset.lastUpdated ?? "").split("-");
+  document.getElementById("statUpdated").textContent = upD ? `${upD}/${upM}/${upY}` : "–";
   document.getElementById("sourceNote").textContent = `Fonte dos dados: ${dataset.source}`;
 
   // ---- theme toggle ----------------------------------------------------
