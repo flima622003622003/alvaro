@@ -178,6 +178,7 @@ async function main() {
             renderMapSelection();
             renderLineCharts();
             renderFullTable();
+            scrollFullTable();
           }),
       (update) => update,
     ).attr("fill", (d) => {
@@ -404,6 +405,7 @@ async function main() {
       const th = document.createElement("th");
       th.textContent = String(yr);
       th.classList.toggle("year-active", yr === selectedYear);
+      th.dataset.year = String(yr);
       head.appendChild(th);
     }
 
@@ -414,6 +416,7 @@ async function main() {
     for (const s of statesSorted) {
       const tr = document.createElement("tr");
       tr.classList.toggle("state-active", s.state === compareState);
+      tr.dataset.state = s.state;
 
       const tdName = document.createElement("td");
       tdName.textContent = s.state;
@@ -454,6 +457,28 @@ async function main() {
     body.appendChild(trTotal);
   }
 
+  // Scroll only the table's own box (never the page) so the selected state's
+  // row and the selected year's column end up centered in view.
+  function scrollFullTable({ toState = true, behavior = "smooth" } = {}) {
+    const box = document.querySelector(".full-table-scroll");
+    const boxRect = box.getBoundingClientRect();
+    const target = { behavior };
+
+    const th = document.querySelector(`#fullTableHead th[data-year="${selectedYear}"]`);
+    if (th) {
+      const r = th.getBoundingClientRect();
+      target.left = box.scrollLeft + (r.left - boxRect.left) - (box.clientWidth - r.width) / 2;
+    }
+    if (toState && compareState) {
+      const tr = [...document.querySelectorAll("#fullTableBody tr[data-state]")].find((row) => row.dataset.state === compareState);
+      if (tr) {
+        const r = tr.getBoundingClientRect();
+        target.top = box.scrollTop + (r.top - boxRect.top) - (box.clientHeight - r.height) / 2;
+      }
+    }
+    box.scrollTo(target);
+  }
+
   // ======================================================================
   // Wiring + initial render
   // ======================================================================
@@ -464,6 +489,7 @@ async function main() {
     renderLineCharts();
     renderTable();
     renderFullTable();
+    scrollFullTable({ behavior: "auto" });
   }
 
   yearSelect.addEventListener("change", () => {
@@ -473,6 +499,7 @@ async function main() {
     renderMap();
     renderTable();
     renderFullTable();
+    scrollFullTable({ toState: false });
   });
 
   stateSelect.addEventListener("change", () => {
@@ -480,6 +507,7 @@ async function main() {
     renderMapSelection();
     renderLineCharts();
     renderFullTable();
+    scrollFullTable();
   });
 
   renderAll();
