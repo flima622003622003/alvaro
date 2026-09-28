@@ -277,8 +277,16 @@ async function main() {
           .attr("stroke", muted).attr("stroke-width", 1.5).attr("stroke-dasharray", "3,3");
       }
 
+      // break the solid line wherever years are missing from the array itself
+      // (e.g. 1990 -> 2000), not only at explicit nulls, so only the dashed
+      // connector shows across the gap.
+      const pathValues = s.values.flatMap((d, i) => {
+        const prev = s.values[i - 1];
+        return prev && d.year - prev.year > 1 ? [{ year: d.year, value: null }, d] : [d];
+      });
+
       g.append("path")
-        .datum(s.values)
+        .datum(pathValues)
         .attr("fill", "none")
         .attr("stroke", s.color)
         .attr("stroke-width", 2)
