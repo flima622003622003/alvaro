@@ -189,26 +189,22 @@ async function main() {
   const M = { top: 16, right: 16, bottom: 28, left: 56 };
   const W = 960, H = 340;
 
+  // Only one chart is shown at a time: the US total when no state is selected
+  // ("Estados Unidos" in the filter), otherwise the selected state's series.
   function renderLineCharts() {
-    drawLineChart(d3.select("#lineChart"), {
-      label: "Total EUA", color: cssVar("--series-1"),
-      values: years.map((y) => ({ year: y, value: dataset.usTotal[String(y)] ?? null })),
-    });
+    const showState = Boolean(compareState);
+    document.getElementById("usChartCard").hidden = showState;
+    document.getElementById("stateChartCard").hidden = !showState;
 
-    const stateSvg = d3.select("#stateLineChart");
-    const empty = document.getElementById("stateChartEmpty");
-    document.getElementById("stateChartTitle").textContent = compareState
-      ? `Evolução histórica — ${compareState}`
-      : "Evolução histórica por estado";
-    if (!compareState) {
-      stateSvg.selectAll("*").remove();
-      stateSvg.style("display", "none");
-      empty.hidden = false;
+    if (!showState) {
+      drawLineChart(d3.select("#lineChart"), {
+        label: "Total EUA", color: cssVar("--series-1"),
+        values: years.map((y) => ({ year: y, value: dataset.usTotal[String(y)] ?? null })),
+      });
       return;
     }
-    empty.hidden = true;
-    stateSvg.style("display", "block");
-    drawLineChart(stateSvg, {
+    document.getElementById("stateChartTitle").textContent = `Evolução histórica — ${compareState}`;
+    drawLineChart(d3.select("#stateLineChart"), {
       label: compareState, color: cssVar("--series-2"),
       values: years.map((y) => ({ year: y, value: valueFor(compareState, y) })),
     });

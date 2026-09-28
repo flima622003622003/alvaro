@@ -113,7 +113,7 @@
   .filters:not(.is-stuck) .bar-logo { display: none !important; }
   .filters label { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
   .rank-search { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; margin: 0 0 10px; }
-  .rank-search input { flex: 1; min-width: 0; }
+  .rank-search input { width: 180px; max-width: 100%; }
   .filters select, .rank-search input[type="search"] {
     font: inherit; font-size: 13px; color: var(--text-primary);
     background: var(--page); border: 1px solid var(--border); border-radius: 6px;
@@ -228,7 +228,7 @@
       <select id="yearSelect"></select>
     </label>
     <label>Comparar estado no gráfico
-      <select id="stateSelect"><option value="">Nenhum</option></select>
+      <select id="stateSelect"><option value="">Estados Unidos</option></select>
     </label>
   </div>
 
@@ -298,17 +298,16 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="usChartCard">
     <h2>Evolução histórica — Total EUA</h2>
     <p class="sub">Total nos EUA desde 1990. O Census Bureau não publicou estimativa ACS de 1 ano para 2020 (pandemia) — o intervalo aparece como uma quebra na linha.</p>
     <svg id="lineChart" viewBox="0 0 960 340" style="width:100%;height:auto;display:block"></svg>
   </div>
 
-  <div class="card">
+  <div class="card" id="stateChartCard" hidden>
     <h2 id="stateChartTitle">Evolução histórica por estado</h2>
-    <p class="sub">Série do estado selecionado desde 1990, em escala própria. Escolha um estado no filtro “Comparar estado no gráfico” ou clique no mapa.</p>
-    <p class="sub" id="stateChartEmpty">Nenhum estado selecionado.</p>
-    <svg id="stateLineChart" viewBox="0 0 960 340" style="width:100%;height:auto;display:none"></svg>
+    <p class="sub">Série do estado selecionado desde 1990. Para voltar ao total, escolha “Estados Unidos” no filtro “Comparar estado no gráfico”.</p>
+    <svg id="stateLineChart" viewBox="0 0 960 340" style="width:100%;height:auto;display:block"></svg>
   </div>
 
   <footer>
