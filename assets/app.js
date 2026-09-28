@@ -481,8 +481,13 @@ async function main() {
 
     const trTotal = document.createElement("tr");
     trTotal.className = "total-row";
+    // the US total is the "no state" selection, same as "Estados Unidos" in the dropdown
+    trTotal.classList.toggle("state-active", !compareState);
     const tdLabel = document.createElement("td");
     tdLabel.textContent = "Total EUA";
+    tdLabel.className = "state-name";
+    tdLabel.title = "Clique para ver o total dos EUA no gráfico";
+    tdLabel.addEventListener("click", () => selectState(""));
     trTotal.appendChild(tdLabel);
     for (const yr of years) {
       const td = document.createElement("td");
