@@ -477,13 +477,13 @@ async function main() {
   }
 
   // Scroll only the table's own box (never the page) so the selected state's
-  // row and the selected year's column end up centered in view.
-  function scrollFullTable({ toState = true, behavior = "smooth" } = {}) {
+  // row and/or the selected year's column end up centered in view.
+  function scrollFullTable({ toState = true, toYear = false, behavior = "smooth" } = {}) {
     const box = document.querySelector(".full-table-scroll");
     const boxRect = box.getBoundingClientRect();
     const target = { behavior };
 
-    const th = document.querySelector(`#fullTableHead th[data-year="${selectedYear}"]`);
+    const th = toYear && document.querySelector(`#fullTableHead th[data-year="${selectedYear}"]`);
     if (th) {
       const r = th.getBoundingClientRect();
       target.left = box.scrollLeft + (r.left - boxRect.left) - (box.clientWidth - r.width) / 2;
@@ -508,6 +508,7 @@ async function main() {
     renderLineCharts();
     renderTable();
     renderFullTable();
+    // Start at the first year; the table only follows the year once the user picks one.
     scrollFullTable({ behavior: "auto" });
   }
 
@@ -518,7 +519,7 @@ async function main() {
     renderMap();
     renderTable();
     renderFullTable();
-    scrollFullTable({ toState: false });
+    scrollFullTable({ toState: false, toYear: true });
   });
 
   stateSelect.addEventListener("change", () => {
