@@ -173,12 +173,7 @@ async function main() {
           .on("mouseleave", hideTooltip)
           .on("click", (event, d) => {
             const name = d.properties.name;
-            compareState = compareState === name ? "" : name;
-            stateSelect.value = compareState;
-            renderMapSelection();
-            renderLineCharts();
-            renderFullTable();
-            scrollFullTable();
+            selectState(compareState === name ? "" : name);
           }),
       (update) => update,
     ).attr("fill", (d) => {
@@ -374,6 +369,8 @@ async function main() {
     tbody.replaceChildren();
     for (const r of rows) {
       const tr = document.createElement("tr");
+      tr.classList.toggle("state-active", r.state === compareState);
+      tr.dataset.state = r.state;
       const tdRank = document.createElement("td");
       tdRank.textContent = String(rankByValue.get(r.state));
       const tdState = document.createElement("td");
@@ -417,6 +414,17 @@ async function main() {
     });
   });
 
+  // Center the selected state's row inside the ranking's own scroll box.
+  function scrollRanking({ behavior = "smooth" } = {}) {
+    if (!compareState) return;
+    const box = document.querySelector(".table-scroll");
+    const tr = [...document.querySelectorAll("#tableBody tr[data-state]")].find((row) => row.dataset.state === compareState);
+    if (!tr) return;
+    const boxRect = box.getBoundingClientRect();
+    const r = tr.getBoundingClientRect();
+    box.scrollTo({ top: box.scrollTop + (r.top - boxRect.top) - (box.clientHeight - r.height) / 2, behavior });
+  }
+
   document.getElementById("tableSearch").addEventListener("input", (e) => {
     searchTerm = e.target.value.trim().toLowerCase();
     renderTable();
@@ -453,11 +461,7 @@ async function main() {
       tdName.className = "state-name";
       tdName.title = "Clique para destacar no mapa e no gráfico";
       tdName.addEventListener("click", () => {
-        compareState = compareState === s.state ? "" : s.state;
-        stateSelect.value = compareState;
-        renderMapSelection();
-        renderLineCharts();
-        renderFullTable();
+        selectState(compareState === s.state ? "" : s.state);
       });
       tr.appendChild(tdName);
 
@@ -546,16 +550,29 @@ async function main() {
     renderMap();
     renderTable();
     renderFullTable();
+    scrollRanking();
     scrollFullTable({ toState: false, toYear: true });
   });
 
-  stateSelect.addEventListener("change", () => {
-    compareState = stateSelect.value;
+  // Single entry point for choosing a state, whether it comes from the
+  // dropdown, the map or the full history table.
+  function selectState(name) {
+    compareState = name;
+    stateSelect.value = compareState;
+    // a search that hides the chosen state would leave nothing highlighted
+    if (compareState && !compareState.toLowerCase().includes(searchTerm)) {
+      searchTerm = "";
+      document.getElementById("tableSearch").value = "";
+    }
     renderMapSelection();
     renderLineCharts();
+    renderTable();
     renderFullTable();
+    scrollRanking();
     scrollFullTable();
-  });
+  }
+
+  stateSelect.addEventListener("change", () => selectState(stateSelect.value));
 
   renderAll();
 }
