@@ -35,7 +35,9 @@ Birth for the Foreign-Born Population), variável referente ao Brasil.
 O Census Bureau não publicou estimativa ACS de 1 ano para **2020** (coleta de
 dados interrompida pela pandemia) — o dataset registra esse ano como `null` e
 o gráfico mostra o intervalo como uma linha tracejada, nunca como um valor
-inventado. As margens de erro da ACS não são exibidas aqui; consulte
+inventado. O mesmo vale para **1991–1999**: entre os Censos decenais de 1990 e
+2000 não há estimativa anual por estado, então esses anos não existem no
+dataset e o gráfico liga 1990 a 2000 apenas com o tracejado. As margens de erro da ACS não são exibidas aqui; consulte
 [data.census.gov](https://data.census.gov/table/ACSDT1Y2024.C05006) para os
 intervalos de confiança de cada estimativa.
 
