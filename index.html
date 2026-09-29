@@ -130,9 +130,7 @@
   .filters .bar-logo { height: 28px; width: auto; margin-right: 4px; }
   .filters:not(.is-stuck) .bar-logo { display: none !important; }
   .filters label { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
-  .rank-search { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; margin: 0 0 10px; }
-  .rank-search input { width: 180px; max-width: 100%; }
-  .filters select, .rank-search input[type="search"] {
+  .filters select {
     font: inherit; font-size: 13px; color: var(--text-primary);
     background: var(--page); border: 1px solid var(--border); border-radius: 6px;
     padding: 5px 8px;
@@ -311,9 +309,6 @@
     <div class="card">
       <h2>Ranking — <span id="rankingScope"></span><span class="yearInline"></span></h2>
       <p class="sub" id="rankingSortNote">Ordenado por população (maior → menor). Clique nos cabeçalhos para mudar.</p>
-      <label class="rank-search">Busca no ranking
-        <input type="search" id="tableSearch" placeholder="Nome do estado" />
-      </label>
       <div class="table-scroll">
         <table id="rankingTable">
           <thead>

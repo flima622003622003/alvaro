@@ -438,7 +438,6 @@ async function main() {
   // ======================================================================
   let sortKey = "value";
   let sortDir = -1; // desc
-  let searchTerm = "";
 
   function renderTable() {
     // "#" is always the position by population, whatever the current sort.
@@ -449,7 +448,6 @@ async function main() {
     );
 
     const rows = rowsForYear(selectedYear)
-      .filter((r) => r.state.toLowerCase().includes(searchTerm))
       .sort((a, b) => {
         if (sortKey === "state") return sortDir * a.state.localeCompare(b.state, "pt-BR");
         if (sortKey === "rank") return sortDir * (rankByValue.get(a.state) - rankByValue.get(b.state));
@@ -516,11 +514,6 @@ async function main() {
     const r = tr.getBoundingClientRect();
     box.scrollTo({ top: box.scrollTop + (r.top - boxRect.top) - (box.clientHeight - r.height) / 2, behavior });
   }
-
-  document.getElementById("tableSearch").addEventListener("input", (e) => {
-    searchTerm = e.target.value.trim().toLowerCase();
-    renderTable();
-  });
 
   // ======================================================================
   // Full historical table (states x years, like the "All" sheet)
@@ -687,11 +680,6 @@ async function main() {
     }
     compareState = name;
     stateSelect.value = compareState;
-    // a search that hides the chosen state would leave nothing highlighted
-    if (compareState && !compareState.toLowerCase().includes(searchTerm)) {
-      searchTerm = "";
-      document.getElementById("tableSearch").value = "";
-    }
     renderMapSelection();
     renderLineCharts();
     renderTable();
@@ -707,10 +695,6 @@ async function main() {
     selectedRegion = id;
     regionSelect.value = id;
     compareState = clearState || (state && !inScope(state)) ? "" : state;
-    if (compareState && !compareState.toLowerCase().includes(searchTerm)) {
-      searchTerm = "";
-      document.getElementById("tableSearch").value = "";
-    }
     fillStateSelect();
     renderAll();
     scrollRanking({ behavior: "auto" });
