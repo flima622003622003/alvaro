@@ -1,8 +1,21 @@
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
-import { feature } from "https://cdn.jsdelivr.net/npm/topojson-client@3/+esm";
+import { feature, merge } from "https://cdn.jsdelivr.net/npm/topojson-client@3/+esm";
 
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("pt-BR") : "sem dado");
 const seqSteps = ["--seq-1", "--seq-2", "--seq-3", "--seq-4"];
+
+// The 4 Census Bureau regions. Titles read "Nordeste dos EUA" etc. so they
+// aren't mistaken for Brazil's regions.
+const REGIONS = [
+  { id: "northeast", name: "Nordeste", states: ["Connecticut", "Maine", "Massachusetts", "New Hampshire", "New Jersey", "New York", "Pennsylvania", "Rhode Island", "Vermont"] },
+  { id: "midwest", name: "Meio-Oeste", states: ["Illinois", "Indiana", "Iowa", "Kansas", "Michigan", "Minnesota", "Missouri", "Nebraska", "North Dakota", "Ohio", "South Dakota", "Wisconsin"] },
+  { id: "south", name: "Sul", states: ["Alabama", "Arkansas", "Delaware", "District of Columbia", "Florida", "Georgia", "Kentucky", "Louisiana", "Maryland", "Mississippi", "North Carolina", "Oklahoma", "South Carolina", "Tennessee", "Texas", "Virginia", "West Virginia"] },
+  { id: "west", name: "Oeste", states: ["Alaska", "Arizona", "California", "Colorado", "Hawaii", "Idaho", "Montana", "Nevada", "New Mexico", "Oregon", "Utah", "Washington", "Wyoming"] },
+];
+const regionById = new Map(REGIONS.map((r) => [r.id, r]));
+const regionOfState = new Map(REGIONS.flatMap((r) => r.states.map((st) => [st, r.id])));
+const regionLabel = (id) => `${regionById.get(id).name} dos EUA`;
+const pctText = (part, whole) => `${((part / whole) * 100).toFixed(1).replace(".", ",")}% do total dos EUA`;
 
 function cssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -18,6 +31,7 @@ async function main() {
   const latestYear = years[years.length - 1];
   let selectedYear = latestYear;
   let compareState = "";
+  let selectedRegion = ""; // "" = all regions
 
   // ---- populate filter controls -------------------------------------
   const yearSelect = document.getElementById("yearSelect");
@@ -31,11 +45,28 @@ async function main() {
 
   const stateNames = dataset.states.map((s) => s.state).sort((a, b) => a.localeCompare(b, "pt-BR"));
   const stateSelect = document.getElementById("stateSelect");
-  for (const name of stateNames) {
+  // Only the chosen region's states; the first option is that scope's total.
+  function fillStateSelect() {
+    stateSelect.replaceChildren();
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = selectedRegion ? "Nenhum — ver total da região" : "Nenhum — ver total dos EUA";
+    stateSelect.appendChild(first);
+    for (const name of stateNames.filter(inScope)) {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      stateSelect.appendChild(opt);
+    }
+    stateSelect.value = compareState;
+  }
+
+  const regionSelect = document.getElementById("regionSelect");
+  for (const r of REGIONS) {
     const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    stateSelect.appendChild(opt);
+    opt.value = r.id;
+    opt.textContent = r.name;
+    regionSelect.appendChild(opt);
   }
 
   document.getElementById("yearRangeLabel").textContent = `${years[0]}–${latestYear}`;
@@ -82,24 +113,48 @@ async function main() {
     return typeof v === "number" ? v : null;
   }
 
+  function inScope(state) {
+    return !selectedRegion || regionOfState.get(state) === selectedRegion;
+  }
+
   function rowsForYear(year) {
     return dataset.states
+      .filter((s) => inScope(s.state))
       .map((s) => ({ state: s.state, value: valueFor(s.state, year) }))
       .filter((r) => r.value !== null);
+  }
+
+  // Region total = sum of its states with data, the same way usTotal is the
+  // sum of all states. null when no state has data (2020).
+  function regionTotal(regionId, year) {
+    const vals = regionById.get(regionId).states.map((st) => valueFor(st, year)).filter((v) => v !== null);
+    return vals.length ? d3.sum(vals) : null;
+  }
+
+  function scopeTotal(year) {
+    if (selectedRegion) return regionTotal(selectedRegion, year);
+    const v = dataset.usTotal[String(year)];
+    return typeof v === "number" ? v : null;
   }
 
   // ======================================================================
   // Stat tiles
   // ======================================================================
   function renderStats() {
-    const total = dataset.usTotal[String(selectedYear)];
+    const total = scopeTotal(selectedYear);
+    document.getElementById("statTotalLabel").textContent = selectedRegion ? `Total no ${regionLabel(selectedRegion)}` : "Total nos EUA";
     document.getElementById("statTotal").textContent = fmt(total);
 
+    const shareEl = document.getElementById("statShare");
+    const us = dataset.usTotal[String(selectedYear)];
+    shareEl.hidden = !selectedRegion || typeof total !== "number" || !us;
+    if (!shareEl.hidden) shareEl.textContent = pctText(total, us);
+
     const idx = years.indexOf(selectedYear);
-    const prevYear = years.slice(0, idx).reverse().find((y) => typeof dataset.usTotal[String(y)] === "number");
+    const prevYear = years.slice(0, idx).reverse().find((y) => scopeTotal(y) !== null);
     const deltaEl = document.getElementById("statDelta");
     if (prevYear !== undefined && typeof total === "number") {
-      const prev = dataset.usTotal[String(prevYear)];
+      const prev = scopeTotal(prevYear);
       const diff = total - prev;
       const pct = prev ? (diff / prev) * 100 : 0;
       deltaEl.className = `delta ${diff > 0 ? "up" : diff < 0 ? "down" : "flat"}`;
@@ -113,6 +168,10 @@ async function main() {
     document.getElementById("statTop").textContent = rows[0]?.state ?? "–";
     document.getElementById("statTopValue").textContent = rows[0] ? fmt(rows[0].value) : "";
     document.getElementById("statCoverage").textContent = String(rows.length);
+    document.getElementById("statTopLabel").textContent = selectedRegion ? "Estado com mais brasileiros na região" : "Estado com mais brasileiros";
+    document.getElementById("statCoverageOf").textContent = selectedRegion
+      ? `de ${regionById.get(selectedRegion).states.length} no ${regionLabel(selectedRegion)}`
+      : "de 51 (50 estados + DC)";
   }
 
   // ======================================================================
@@ -176,6 +235,7 @@ async function main() {
           .on("mouseleave", hideTooltip)
           .on("click", (event, d) => {
             const name = d.properties.name;
+            // selectState moves the region filter when the state is outside it
             selectState(compareState === name ? "" : name);
           }),
       (update) => update,
@@ -184,8 +244,23 @@ async function main() {
       return v === null ? nodata : color(v);
     });
 
+    renderMapRegion();
     renderMapSelection();
     renderMapLegend(dataset.states.some((s) => valueFor(s.state, selectedYear) === null));
+  }
+
+  // Fade states outside the chosen region and outline the region itself.
+  function renderMapRegion() {
+    mapSvg.selectAll("path.state-path").classed("out-region", (d) => !inScope(d.properties.name));
+    mapSvg.selectAll("path.region-outline").remove();
+    if (selectedRegion) {
+      const names = new Set(regionById.get(selectedRegion).states);
+      const outline = merge(topo, topo.objects.states.geometries.filter((g) => names.has(g.properties.name)));
+      mapSvg.append("path").attr("class", "region-outline").attr("d", path(outline));
+    }
+    document.getElementById("mapSub").textContent = selectedRegion
+      ? `Cor = população nascida no Brasil no ano selecionado. Contorno = ${regionLabel(selectedRegion)}; os demais estados ficam esmaecidos (clique em um deles para mudar de região).`
+      : "Cor = população nascida no Brasil no ano selecionado. Passe o mouse para ver o valor.";
   }
 
   function renderMapSelection() {
@@ -204,16 +279,22 @@ async function main() {
   const W = 960, H = 340;
 
   // Only one chart is shown at a time: the US total when no state is selected
-  // ("Estados Unidos" in the filter), otherwise the selected state's series.
+  // ("Nenhum" in the filter), otherwise the selected state's series.
   function renderLineCharts() {
     const showState = Boolean(compareState);
     document.getElementById("usChartCard").hidden = showState;
     document.getElementById("stateChartCard").hidden = !showState;
 
     if (!showState) {
+      const label = selectedRegion ? regionLabel(selectedRegion) : "Total EUA";
+      document.getElementById("usChartTitle").textContent = `Evolução histórica — ${label}`;
+      document.getElementById("usChartLead").textContent = selectedRegion
+        ? `Soma dos estados do ${label} desde 1990.`
+        : "Total nos EUA desde 1990.";
       drawLineChart(d3.select("#lineChart"), {
-        label: "Total EUA", color: cssVar("--series-1"),
-        values: years.map((y) => ({ year: y, value: dataset.usTotal[String(y)] ?? null })),
+        label, color: cssVar("--series-1"),
+        values: years.map((y) => ({ year: y, value: scopeTotal(y) })),
+        shareOfUs: Boolean(selectedRegion),
       });
       return;
     }
@@ -336,6 +417,13 @@ async function main() {
           val.textContent = fmt(v);
           row.append(k, val);
           wrap.appendChild(row);
+          const us = dataset.usTotal[String(nearest)];
+          if (s.shareOfUs && v !== null && us) {
+            const shareRow = document.createElement("div");
+            shareRow.className = "t-row";
+            shareRow.textContent = pctText(v, us);
+            wrap.appendChild(shareRow);
+          }
         }
         showTooltip(event.clientX, event.clientY, wrap);
       })
@@ -391,8 +479,9 @@ async function main() {
       th.setAttribute("aria-sort", active ? (sortDir === 1 ? "ascending" : "descending") : "none");
       th.querySelector(".sort-ind").textContent = active ? (sortDir === 1 ? "▲" : "▼") : "↕";
     });
+    document.getElementById("rankingScope").textContent = selectedRegion ? `${regionLabel(selectedRegion)} — ` : "";
     document.getElementById("rankingSortNote").textContent =
-      `Ordenado por ${sortNotes[sortKey][sortDir === 1 ? 0 : 1]}. Clique nos cabeçalhos para mudar.`;
+      `Ordenado por ${sortNotes[sortKey][sortDir === 1 ? 0 : 1]}.${selectedRegion ? " # = posição dentro da região." : ""} Clique nos cabeçalhos para mudar.`;
   }
 
   // First click on a column uses its natural direction; clicking again flips it.
@@ -453,8 +542,34 @@ async function main() {
     const body = document.getElementById("fullTableBody");
     body.replaceChildren();
 
-    const statesSorted = dataset.states.slice().sort((a, b) => a.state.localeCompare(b.state, "pt-BR"));
-    for (const s of statesSorted) {
+    for (const region of REGIONS) {
+      if (selectedRegion && region.id !== selectedRegion) continue;
+      const statesSorted = dataset.states
+        .filter((s) => regionOfState.get(s.state) === region.id)
+        .sort((a, b) => a.state.localeCompare(b.state, "pt-BR"));
+      for (const s of statesSorted) body.appendChild(stateRow(s));
+
+      const trRegion = document.createElement("tr");
+      trRegion.className = "region-row";
+      trRegion.classList.toggle("state-active", selectedRegion === region.id && !compareState);
+      const tdRegion = document.createElement("td");
+      tdRegion.textContent = `Total ${regionLabel(region.id)}`;
+      tdRegion.className = "state-name";
+      tdRegion.title = "Clique para filtrar por esta região";
+      tdRegion.addEventListener("click", () => selectRegion(region.id, { clearState: true }));
+      trRegion.appendChild(tdRegion);
+      for (const yr of years) {
+        const td = document.createElement("td");
+        const v = regionTotal(region.id, yr);
+        td.textContent = v === null ? "—" : fmt(v);
+        if (v === null) td.classList.add("no-data");
+        if (yr === selectedYear) td.classList.add("year-active");
+        trRegion.appendChild(td);
+      }
+      body.appendChild(trRegion);
+    }
+
+    function stateRow(s) {
       const tr = document.createElement("tr");
       tr.classList.toggle("state-active", s.state === compareState);
       tr.dataset.state = s.state;
@@ -476,18 +591,18 @@ async function main() {
         if (yr === selectedYear) td.classList.add("year-active");
         tr.appendChild(td);
       }
-      body.appendChild(tr);
+      return tr;
     }
 
     const trTotal = document.createElement("tr");
     trTotal.className = "total-row";
-    // the US total is the "no state" selection, same as "Estados Unidos" in the dropdown
-    trTotal.classList.toggle("state-active", !compareState);
+    // the US total is the "no state" selection, same as "Nenhum" in the dropdown
+    trTotal.classList.toggle("state-active", !compareState && !selectedRegion);
     const tdLabel = document.createElement("td");
     tdLabel.textContent = "Total EUA";
     tdLabel.className = "state-name";
     tdLabel.title = "Clique para ver o total dos EUA no gráfico";
-    tdLabel.addEventListener("click", () => selectState(""));
+    tdLabel.addEventListener("click", () => selectRegion("", { clearState: true }));
     trTotal.appendChild(tdLabel);
     for (const yr of years) {
       const td = document.createElement("td");
@@ -565,6 +680,11 @@ async function main() {
   // Single entry point for choosing a state, whether it comes from the
   // dropdown, the map or the full history table.
   function selectState(name) {
+    // a state outside the current region moves the region filter to its region
+    if (name && !inScope(name)) {
+      selectRegion(regionOfState.get(name), { state: name });
+      return;
+    }
     compareState = name;
     stateSelect.value = compareState;
     // a search that hides the chosen state would leave nothing highlighted
@@ -582,6 +702,24 @@ async function main() {
 
   stateSelect.addEventListener("change", () => selectState(stateSelect.value));
 
+  // The region narrows every view; a chosen state outside it is dropped.
+  function selectRegion(id, { state = compareState, clearState = false } = {}) {
+    selectedRegion = id;
+    regionSelect.value = id;
+    compareState = clearState || (state && !inScope(state)) ? "" : state;
+    if (compareState && !compareState.toLowerCase().includes(searchTerm)) {
+      searchTerm = "";
+      document.getElementById("tableSearch").value = "";
+    }
+    fillStateSelect();
+    renderAll();
+    scrollRanking({ behavior: "auto" });
+    scrollFullTable({ toYear: true, behavior: "auto" });
+  }
+
+  regionSelect.addEventListener("change", () => selectRegion(regionSelect.value));
+
+  fillStateSelect();
   renderAll();
 }
 

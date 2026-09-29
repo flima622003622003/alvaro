@@ -239,6 +239,10 @@
   .state-path { stroke: var(--surface-1); stroke-width: 1px; cursor: pointer; }
   .state-path:hover { stroke: var(--text-primary); stroke-width: 1.5px; }
   .state-path.selected { stroke: var(--danger); stroke-width: 3px; }
+  /* states outside the chosen region: faded but still hoverable/clickable */
+  .state-path.out-region { opacity: 0.25; }
+  .region-outline { fill: none; stroke: var(--text-primary); stroke-width: 2px; pointer-events: none; }
+  .full-table tr.region-row td { font-weight: 600; border-bottom: 1px solid var(--baseline); }
 
   .axis path, .axis line { stroke: var(--baseline); }
   .axis text { fill: var(--text-muted); font-size: 10px; }
@@ -265,26 +269,30 @@
     <label>Ano
       <select id="yearSelect"></select>
     </label>
-    <label>Gráfico de
-      <select id="stateSelect"><option value="">Estados Unidos</option></select>
+    <label>Região dos EUA
+      <select id="regionSelect"><option value="">Todas</option></select>
+    </label>
+    <label>Estado
+      <select id="stateSelect"></select>
     </label>
   </div>
 
   <div class="stats">
     <div class="stat-tile">
-      <div class="label">Total nos EUA (<span class="yearInline"></span>)</div>
+      <div class="label"><span id="statTotalLabel">Total nos EUA</span> (<span class="yearInline"></span>)</div>
       <div class="value" id="statTotal">–</div>
       <div class="delta" id="statDelta"></div>
+      <div class="delta flat" id="statShare" hidden></div>
     </div>
     <div class="stat-tile">
-      <div class="label">Estado com mais brasileiros</div>
+      <div class="label" id="statTopLabel">Estado com mais brasileiros</div>
       <div class="value" id="statTop" style="font-size:20px">–</div>
       <div class="delta flat" id="statTopValue"></div>
     </div>
     <div class="stat-tile">
       <div class="label">Estados com dado no ano</div>
       <div class="value" id="statCoverage">–</div>
-      <div class="delta flat">de 51 (50 estados + DC)</div>
+      <div class="delta flat" id="statCoverageOf">de 51 (50 estados + DC)</div>
     </div>
     <div class="stat-tile">
       <div class="label">Última atualização do dataset</div>
@@ -295,13 +303,13 @@
   <div class="cards">
     <div class="card">
       <h2>Mapa por estado</h2>
-      <p class="sub">Cor = população nascida no Brasil no ano selecionado. Passe o mouse para ver o valor.</p>
+      <p class="sub" id="mapSub">Cor = população nascida no Brasil no ano selecionado. Passe o mouse para ver o valor.</p>
       <div class="map-legend" id="mapLegend"></div>
       <svg id="map" viewBox="0 0 960 600" style="width:100%;height:auto;display:block"></svg>
     </div>
 
     <div class="card">
-      <h2>Ranking — <span class="yearInline"></span></h2>
+      <h2>Ranking — <span id="rankingScope"></span><span class="yearInline"></span></h2>
       <p class="sub" id="rankingSortNote">Ordenado por população (maior → menor). Clique nos cabeçalhos para mudar.</p>
       <label class="rank-search">Busca no ranking
         <input type="search" id="tableSearch" placeholder="Nome do estado" />
@@ -323,7 +331,7 @@
 
   <div class="card">
     <h2>Histórico completo por estado</h2>
-    <p class="sub">Clique no nome do estado para destacá-lo no mapa e no gráfico abaixo.</p>
+    <p class="sub" id="fullTableSub">Estados agrupados pelas 4 regiões do Census Bureau, com o total de cada região. Clique no nome de um estado ou de uma região para destacá-lo no mapa e no gráfico abaixo.</p>
     <div class="full-table-wrap">
       <div class="full-table-scroll">
         <table class="full-table" id="fullTable">
@@ -335,14 +343,14 @@
   </div>
 
   <div class="card" id="usChartCard">
-    <h2>Evolução histórica — Total EUA</h2>
-    <p class="sub">Total nos EUA desde 1990. A linha tracejada marca anos sem estimativa do Census Bureau: 1991–1999 (só há dados dos Censos decenais de 1990 e 2000) e 2020 (sem ACS de 1 ano por causa da pandemia). Nenhum valor é estimado nesses intervalos.</p>
+    <h2 id="usChartTitle">Evolução histórica — Total EUA</h2>
+    <p class="sub"><span id="usChartLead">Total nos EUA desde 1990.</span> A linha tracejada marca anos sem estimativa do Census Bureau: 1991–1999 (só há dados dos Censos decenais de 1990 e 2000) e 2020 (sem ACS de 1 ano por causa da pandemia). Nenhum valor é estimado nesses intervalos.</p>
     <svg id="lineChart" viewBox="0 0 960 340" style="width:100%;height:auto;display:block"></svg>
   </div>
 
   <div class="card" id="stateChartCard" hidden>
     <h2 id="stateChartTitle">Evolução histórica por estado</h2>
-    <p class="sub">Série do estado selecionado desde 1990. A linha tracejada marca anos sem estimativa do Census Bureau (1991–1999 e 2020). Para voltar ao total, escolha “Estados Unidos” no filtro “Gráfico de”.</p>
+    <p class="sub">Série do estado selecionado desde 1990. A linha tracejada marca anos sem estimativa do Census Bureau (1991–1999 e 2020). Para voltar ao total, escolha “Nenhum” no filtro “Estado”.</p>
     <svg id="stateLineChart" viewBox="0 0 960 340" style="width:100%;height:auto;display:block"></svg>
   </div>
 
