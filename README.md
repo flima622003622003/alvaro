@@ -73,6 +73,29 @@ python -m http.server 8000
 
 Depois acesse `http://localhost:8000`.
 
+## Incorporando no site do Instituto (WordPress/Elementor)
+
+Numa página do WordPress, adicione um widget **HTML** do Elementor com o código
+abaixo. O dashboard continua hospedado no GitHub Pages, então cada atualização
+automática dos dados aparece no site sem nenhum passo extra.
+
+```html
+<iframe id="idb-dashboard" src="https://flima622003622003.github.io/alvaro/?embed=1"
+        title="Brasileiros residentes nos EUA, por estado"
+        style="width:100%;height:1800px;border:0;display:block" loading="lazy"></iframe>
+<script>
+  // o dashboard informa a própria altura; o iframe cresce junto (sem rolagem dupla)
+  window.addEventListener("message", (e) => {
+    const frame = document.getElementById("idb-dashboard");
+    if (e.origin !== "https://flima622003622003.github.io" || e.source !== frame.contentWindow) return;
+    if (e.data && e.data.type === "idb-dashboard-height") frame.style.height = e.data.height + "px";
+  });
+</script>
+```
+
+Incorporado (dentro de um iframe, ou com `?embed=1` na URL), o dashboard
+esconde o próprio logo, o título e o botão de tema, e fica sempre no tema claro.
+
 ## Publicando no GitHub Pages
 
 1. Suba este repositório para o GitHub.

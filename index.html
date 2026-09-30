@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Brasileiros nos EUA por Estado</title>
 <meta name="description" content="População nascida no Brasil residente nos EUA, por estado, 1990–presente. Fonte: US Census Bureau (ACS)." />
+<script>
+  // Embedded in the institute's site (inside an iframe, or with ?embed=1):
+  // mark the page before it paints so the header and theme toggle never flash,
+  // and force the light theme so it matches the host page.
+  if (new URLSearchParams(location.search).has("embed") || window.self !== window.top) {
+    document.documentElement.setAttribute("data-embed", "");
+    document.documentElement.setAttribute("data-theme", "light");
+  }
+</script>
 <style>
   :root {
     color-scheme: light;
@@ -248,6 +257,11 @@
 
   footer { margin-top: 24px; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--gridline); padding-top: 12px; }
   footer a { color: var(--text-secondary); }
+  /* embedded: the host page already has its own logo and title */
+  :root[data-embed] header.page-head, :root[data-embed] .theme-toggle { display: none !important; }
+  :root[data-embed] body { padding-block: 0 8px; }
+  /* the iframe grows to fit, so its page never scrolls: nothing to stick to */
+  :root[data-embed] .filters { position: static; }
 </style>
 </head>
 <body>
@@ -358,6 +372,18 @@
 <div class="tooltip" id="tooltip" hidden></div>
 
 <script>
+  // Embedded: tell the host page how tall the dashboard is so the iframe can
+  // grow with it instead of showing its own scrollbar. Only a height is sent.
+  if (document.documentElement.hasAttribute("data-embed") && window.parent !== window) {
+    let last = 0;
+    new ResizeObserver(() => {
+      const height = Math.ceil(document.body.getBoundingClientRect().height);
+      if (height === last) return;
+      last = height;
+      window.parent.postMessage({ type: "idb-dashboard-height", height }, "*");
+    }).observe(document.body);
+  }
+
   // Shadow on the filter bar only while it is stuck to the top of the viewport.
   (() => {
     const bar = document.querySelector(".filters");
