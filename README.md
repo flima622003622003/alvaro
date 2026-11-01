@@ -80,14 +80,14 @@ abaixo. O dashboard continua hospedado no GitHub Pages, então cada atualizaçã
 automática dos dados aparece no site sem nenhum passo extra.
 
 ```html
-<iframe id="idb-dashboard" src="https://flima622003622003.github.io/alvaro/?embed=1"
+<iframe id="idb-dashboard" src="https://institutodiasporabrasil.github.io/brasileiros-eua/?embed=1"
         title="Brasileiros residentes nos EUA, por estado"
         style="width:100%;height:1800px;border:0;display:block" loading="lazy"></iframe>
 <script>
   // o dashboard informa a própria altura; o iframe cresce junto (sem rolagem dupla)
   window.addEventListener("message", (e) => {
     const frame = document.getElementById("idb-dashboard");
-    if (e.origin !== "https://flima622003622003.github.io" || e.source !== frame.contentWindow) return;
+    if (e.origin !== "https://institutodiasporabrasil.github.io" || e.source !== frame.contentWindow) return;
     if (e.data && e.data.type === "idb-dashboard-height") frame.style.height = e.data.height + "px";
   });
 </script>

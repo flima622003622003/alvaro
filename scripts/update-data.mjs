@@ -36,7 +36,7 @@ class NotPublishedError extends Error {}
 const HEADERS = {
   accept: 'application/json',
   // some Census endpoints reject requests without a browser-like User-Agent
-  'user-agent': 'Mozilla/5.0 (compatible; brazilians-in-us-dashboard; +https://github.com/flima622003622003/alvaro)',
+  'user-agent': 'Mozilla/5.0 (compatible; brazilians-in-us-dashboard; +https://github.com/institutodiasporabrasil/brasileiros-eua)',
 };
 
 async function fetchJson(url, { attempts = 3 } = {}) {
