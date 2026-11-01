@@ -2,8 +2,9 @@ name: Update Brazilian population data
 
 on:
   # US Census Bureau typically publishes new ACS 1-year estimates in mid-September.
-  # Run weekly from late August through October to catch the release automatically;
-  # it's a no-op (nothing committed) on weeks the new year isn't out yet.
+  # Run weekly all year to catch the release automatically (it can slip past September);
+  # it's a no-op (nothing committed) on weeks the new year isn't out yet, and the
+  # run fails (red) if the Census request itself fails, so a broken fetch is visible.
   schedule:
     - cron: "0 13 * * 1" # every Monday at 13:00 UTC
   workflow_dispatch:

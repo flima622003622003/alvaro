@@ -29,10 +29,35 @@ const DATA_PATH = path.join(__dirname, '..', 'data', 'population.json');
 const BRAZIL_LABEL = 'Brazil';
 const US_GEO = '010XX00US$0400000'; // all states + DC + Puerto Rico
 
-async function fetchJson(url) {
-  const res = await fetch(url, { headers: { accept: 'application/json' } });
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  return res.json();
+// Thrown when the Census Bureau simply hasn't published that year yet - the
+// only failure that is expected and safe to skip quietly.
+class NotPublishedError extends Error {}
+
+const HEADERS = {
+  accept: 'application/json',
+  // some Census endpoints reject requests without a browser-like User-Agent
+  'user-agent': 'Mozilla/5.0 (compatible; brazilians-in-us-dashboard; +https://github.com/flima622003622003/alvaro)',
+};
+
+async function fetchJson(url, { attempts = 3 } = {}) {
+  let lastErr;
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
+      const text = await res.text();
+      // data.census.gov answers an unpublished year with HTTP 400 "There is no table with the ID: ..."
+      if (res.status === 400 && /no table with the ID/i.test(text)) {
+        throw new NotPublishedError('not published yet');
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}: ${text.slice(0, 200)}`);
+      return JSON.parse(text);
+    } catch (err) {
+      if (err instanceof NotPublishedError) throw err;
+      lastErr = err;
+      if (i < attempts) await new Promise((r) => setTimeout(r, 5_000 * i));
+    }
+  }
+  throw lastErr;
 }
 
 // Look up the current C05006 variable code for Brazil, in case the Census
@@ -117,6 +142,7 @@ async function main() {
   }
 
   let updated = false;
+  let failed = false;
   for (const year of candidates) {
     process.stdout.write(`Fetching ACS 1-year ${year} (Table C05006, Brazil)... `);
     try {
@@ -125,9 +151,17 @@ async function main() {
       updated = true;
       console.log(`ok - US total: ${dataset.usTotal[year]?.toLocaleString('en-US') ?? 'n/a'}`);
     } catch (err) {
-      console.log(`skipped (${err.message})`);
+      if (err instanceof NotPublishedError) {
+        console.log('skipped (not published yet)');
+      } else {
+        // a real failure (network, blocked request, changed format): make the
+        // workflow run fail visibly instead of silently reporting success
+        console.log(`FAILED (${err.message})`);
+        failed = true;
+      }
     }
   }
+  if (failed) process.exitCode = 1;
 
   if (updated) {
     dataset.lastUpdated = new Date().toISOString().slice(0, 10);
